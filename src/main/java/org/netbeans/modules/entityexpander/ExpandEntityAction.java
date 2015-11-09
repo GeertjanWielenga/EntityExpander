@@ -2,7 +2,6 @@ package org.netbeans.modules.entityexpander;
 
 import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
-import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePathScanner;
 import java.awt.event.ActionEvent;
 import java.io.BufferedOutputStream;
@@ -30,7 +29,6 @@ import org.netbeans.api.java.source.CompilationInfo;
 import org.netbeans.api.java.source.JavaSource;
 import org.netbeans.api.java.source.JavaSource.Phase;
 import org.netbeans.api.java.source.Task;
-import org.netbeans.api.java.source.TreeUtilities;
 import org.openide.DialogDisplayer;
 import org.openide.NotifyDescriptor;
 import org.openide.awt.ActionID;
@@ -222,10 +220,7 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
         public void run(CompilationController compilationController) throws Exception {
             compilationController.toPhase(Phase.ELEMENTS_RESOLVED);
             CompilationUnitTree unit = compilationController.getCompilationUnit();
-            Tree.Kind kind = unit.getKind();
-            if (TreeUtilities.CLASS_TREE_KINDS.contains(kind)) {
                 new MemberVisitor(compilationController, action).scan(unit, null);
-            }
         }
     }
 
