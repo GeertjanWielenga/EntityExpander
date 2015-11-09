@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE filesystem PUBLIC "-//NetBeans//DTD Filesystem 1.2//EN" "http://www.netbeans.org/dtds/filesystem-1_2.dtd">
+<filesystem>
+    <folder name="Templates">
+        <folder name="Entities">
+            <file name="Panel.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/Basic.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="10" name="position"/>
+                <attr name="displayName" stringvalue="Simple Panel"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+            <file name="VaadinForm.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/VaadinForm.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="20" name="position"/>
+                <attr name="displayName" stringvalue="Vaadin Form"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+            <file name="BeanNode.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/BeanNode.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="30" name="position"/>
+                <attr name="displayName" stringvalue="Bean Node"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+            <file name="BeanChildFactory.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/BeanChildFactory.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="40" name="position"/>
+                <attr name="displayName" stringvalue="Bean ChildFactory"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+            <file name="ViewerTopComponent.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/ViewerTopComponent.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="50" name="position"/>
+                <attr name="displayName" stringvalue="Viewer TopComponent"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+        </folder>
+    </folder>
+</filesystem>

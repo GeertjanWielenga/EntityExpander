@@ -1,0 +1,28 @@
+package ${package};
+
+import com.vaadin.ui.Component;
+import com.vaadin.ui.FormLayout;
+import com.vaadin.ui.TextField;
+import org.vaadin.maddon.fields.MTextField;
+import org.vaadin.maddon.form.AbstractForm;
+import org.vaadin.maddon.layouts.MVerticalLayout;
+
+public class ${object}Form extends AbstractForm<${object}> {
+    
+  <#list fields as field>
+    private TextField ${field} = new MTextField("${field}");
+  </#list>
+
+    @Override
+    protected Component createContent() {
+        return new MVerticalLayout(
+                new FormLayout(
+                  <#list fields as field>
+                     ${field} <#if field_has_next>,</#if>
+                  </#list>
+                ),
+                getToolbar()
+        );
+    }
+    
+}
