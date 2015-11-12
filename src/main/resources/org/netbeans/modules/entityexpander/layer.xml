@@ -43,6 +43,22 @@
                 <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
                 <attr boolvalue="true" name="requireProject"/>
             </file>
+            <file name="TableViewWithPopup.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/TableViewWithPopup.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="60" name="position"/>
+                <attr name="displayName" stringvalue="Vaadin Table View"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
+            <file name="DataRepository.java" url="nbresloc:/org/netbeans/modules/entityexpander/templates/DataRepository.template">
+                <attr boolvalue="true" name="template"/>
+                <attr intvalue="70" name="position"/>
+                <attr name="displayName" stringvalue="DeltaSpike Data repository"/>
+                <attr name="javax.script.ScriptEngine" stringvalue="freemarker"/>
+                <attr name="templateCategory" stringvalue="java-classes,java-classes-basic"/>
+                <attr boolvalue="true" name="requireProject"/>
+            </file>
         </folder>
     </folder>
 </filesystem>
