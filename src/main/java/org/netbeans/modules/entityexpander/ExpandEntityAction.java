@@ -125,10 +125,11 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                 }
 
                 private void generateTemplate(DataObject d) throws DataObjectNotFoundException, IOException {
-                    DataObject formDobj = DataObject.find(oneEntityTemplate);
+                    DataObject formDobj;
+                    String targetName;
                     DataFolder df = DataFolder.findFolder(d.getPrimaryFile().getParent());
                     String pojoName = d.getPrimaryFile().getName();
-                    String targetName = oneEntityTemplate.getName();
+                    
                     JavaSource javaSource = JavaSource.forFileObject(d.getPrimaryFile());
                     if (javaSource != null) {
                         try {
@@ -137,7 +138,17 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                             Exceptions.printStackTrace(ex);
                         }
                     }
-                    formDobj.createFromTemplate(df, pojoName + targetName, args);
+                    if(oneEntityTemplate.isFolder()) {
+                        for (FileObject childTemplate : oneEntityTemplate.getChildren()) {
+                            targetName = childTemplate.getName();
+                            formDobj = DataObject.find(childTemplate);
+                            formDobj.createFromTemplate(df, pojoName + targetName, args);
+                        }
+                    } else {
+                        targetName = oneEntityTemplate.getName();
+                        formDobj = DataObject.find(oneEntityTemplate);
+                        formDobj.createFromTemplate(df, pojoName + targetName, args);
+                    }
                 }
             });
             templateMenu.add(jmi);
