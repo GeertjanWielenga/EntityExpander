@@ -7,7 +7,8 @@ comments:
 ${package} fully qualified name of the package
 ${object} the POJO for which the class is created
 ${fields} names of all the fields
-${fieldsAndModifiers} modifier, type, and naame of all the fields
+${fieldsAndModifiers} modifier, type, and name of all the fields
+${fieldsAndSimpleModifiers} modifier, simple name of type, and name of all the fields
 ${fieldElems} field elements
 -->
 package ${package};
@@ -16,7 +17,7 @@ import javax.swing.JPanel;
 
 public class ${object}Panel extends JPanel {
     
-<#list fieldsAndModifiers as field>
+<#list fieldsAndSimpleModifiers as field>
  ${field};
 </#list>
 
