@@ -190,7 +190,7 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                     + "\n"
                     + "public class ${object}Frame extends JFrame {\n"
                     + "    \n"
-                    + "  <#list fieldsAndModifiers as field>\n"
+                    + "  <#list fieldsAndSimpleModifiers as field>\n"
                     + "     ${field};\n"
                     + "  </#list>\n"
                     + "\n"
@@ -264,6 +264,7 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                     args.put("fields", fields);
                     args.put("fieldElems", fieldElems);
                     List<String> fieldsAndModifiers = new ArrayList<String>();
+                    List<String> fieldsAndSimpleModifiers = new ArrayList<String>();
                     for (Element e : te.getEnclosedElements()) {
                         if (e.getKind() == ElementKind.FIELD) {
                             Modifier next;
@@ -279,9 +280,18 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                                     + " "
                                     + e.getSimpleName().toString()
                             );
+                            String[] tokens = e.asType().toString().split("\\.(?=[^\\.]+$)");
+                            fieldsAndSimpleModifiers.add(
+                                    next
+                                    + " "
+                                    + tokens[tokens.length-1]
+                                    + " "
+                                    + e.getSimpleName().toString()
+                            );
                         }
                     }
                     args.put("fieldsAndModifiers", fieldsAndModifiers);
+                    args.put("fieldsAndSimpleModifiers", fieldsAndSimpleModifiers);
 //                    List<String> methods = new ArrayList<String>();
 //                    for (Element e : te.getEnclosedElements()) {
 //                        if (e.getKind() == ElementKind.METHOD) {
