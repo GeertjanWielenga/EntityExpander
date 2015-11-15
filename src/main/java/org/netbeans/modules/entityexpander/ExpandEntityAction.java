@@ -127,6 +127,7 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                 private void generateTemplate(DataObject d) throws DataObjectNotFoundException, IOException {
                     DataObject formDobj;
                     String targetName;
+                    String[] tokens;
                     DataFolder df = DataFolder.findFolder(d.getPrimaryFile().getParent());
                     String pojoName = d.getPrimaryFile().getName();
                     
@@ -141,13 +142,15 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                     if(oneEntityTemplate.isFolder()) {
                         for (FileObject childTemplate : oneEntityTemplate.getChildren()) {
                             targetName = childTemplate.getName();
+                            tokens = targetName.split("__");
                             formDobj = DataObject.find(childTemplate);
-                            formDobj.createFromTemplate(df, pojoName + targetName, args);
+                            formDobj.createFromTemplate(df, pojoName + tokens[0], args);
                         }
                     } else {
                         targetName = oneEntityTemplate.getName();
+                        tokens = targetName.split("__");
                         formDobj = DataObject.find(oneEntityTemplate);
-                        formDobj.createFromTemplate(df, pojoName + targetName, args);
+                        formDobj.createFromTemplate(df, pojoName + tokens[0], args);
                     }
                 }
             });
