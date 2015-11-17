@@ -60,7 +60,7 @@ import org.openide.util.actions.Presenter;
 })
 public final class ExpandEntityAction extends AbstractAction implements ContextAwareAction, Presenter.Popup {
 
-    private final DataObject dobj;
+    private final Lookup context;
     private static Map args = new HashMap();
 
     public ExpandEntityAction() {
@@ -70,14 +70,13 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
     public ExpandEntityAction(Lookup context) {
         super("Generate...");
         putValue("expansion", true);
-        this.dobj = context.lookup(DataObject.class);
-        //Enable the menu item only if we're dealing with a TopComponent
-        FileObject fo = dobj.getPrimaryFile();
-        if (fo != null) {
+        this.context = context;
+        for (DataObject d : context.lookupAll(DataObject.class)) {
+            FileObject fo = d.getPrimaryFile();
             JavaSource javaSource = JavaSource.forFileObject(fo);
             if (javaSource != null) {
                 try {
-                    javaSource.runUserActionTask(new ScanForObject(this), true);
+                    javaSource.runUserActionTask(new ScanForObject(this, false), true);
                 } catch (IOException ex) {
                     Exceptions.printStackTrace(ex);
                 }
@@ -106,34 +105,37 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
             jmi.addActionListener(new AbstractAction() {
                 @Override
                 public void actionPerformed(ActionEvent e) {
-                    try {
-                        if (dobj.getPrimaryFile().isFolder()) {
-                            FileObject packageFo = dobj.getPrimaryFile();
-                            for (FileObject fo : packageFo.getChildren()) {
-                                if (fo.getMIMEType().equals("text/x-java")) {
-                                    generateTemplate(DataObject.find(fo));
+                    for (DataObject dobj: context.lookupAll(DataObject.class)) {
+                        try {
+                            if (dobj.getPrimaryFile().isFolder()) {
+                                FileObject packageFo = dobj.getPrimaryFile();
+                                for (FileObject fo : packageFo.getChildren()) {
+                                    if (fo.getMIMEType().equals("text/x-java")) {
+                                        generateTemplate(DataObject.find(fo));
+                                    }
                                 }
+                            } else {
+                                generateTemplate(dobj);
                             }
-                        } else {
-                            generateTemplate(dobj);
+                        } catch (DataObjectNotFoundException ex) {
+                            Exceptions.printStackTrace(ex);
+                        } catch (IOException ex) {
+                            Exceptions.printStackTrace(ex);
                         }
-                    } catch (DataObjectNotFoundException ex) {
-                        Exceptions.printStackTrace(ex);
-                    } catch (IOException ex) {
-                        Exceptions.printStackTrace(ex);
-                    }
+                    }                    
                 }
 
                 private void generateTemplate(DataObject d) throws DataObjectNotFoundException, IOException {
                     DataObject formDobj;
                     String targetName;
+                    String[] tokens;
                     DataFolder df = DataFolder.findFolder(d.getPrimaryFile().getParent());
                     String pojoName = d.getPrimaryFile().getName();
                     
                     JavaSource javaSource = JavaSource.forFileObject(d.getPrimaryFile());
                     if (javaSource != null) {
                         try {
-                            javaSource.runUserActionTask(new ScanForObject(ExpandEntityAction.this), true);
+                            javaSource.runUserActionTask(new ScanForObject(ExpandEntityAction.this, true), true);
                         } catch (IOException ex) {
                             Exceptions.printStackTrace(ex);
                         }
@@ -141,13 +143,15 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                     if(oneEntityTemplate.isFolder()) {
                         for (FileObject childTemplate : oneEntityTemplate.getChildren()) {
                             targetName = childTemplate.getName();
+                            tokens = targetName.split("__");
                             formDobj = DataObject.find(childTemplate);
-                            formDobj.createFromTemplate(df, pojoName + targetName, args);
+                            formDobj.createFromTemplate(df, pojoName + tokens[0], args);
                         }
                     } else {
                         targetName = oneEntityTemplate.getName();
+                        tokens = targetName.split("__");
                         formDobj = DataObject.find(oneEntityTemplate);
-                        formDobj.createFromTemplate(df, pojoName + targetName, args);
+                        formDobj.createFromTemplate(df, pojoName + tokens[0], args);
                     }
                 }
             });
@@ -222,16 +226,18 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
     private static class ScanForObject implements Task<CompilationController> {
 
         private final ExpandEntityAction action;
+        private final boolean doFullProcess;
 
-        private ScanForObject(ExpandEntityAction action) {
+        private ScanForObject(ExpandEntityAction action, boolean doFullProcess) {
             this.action = action;
+            this.doFullProcess = doFullProcess;
         }
 
         @Override
         public void run(CompilationController compilationController) throws Exception {
             compilationController.toPhase(Phase.ELEMENTS_RESOLVED);
             CompilationUnitTree unit = compilationController.getCompilationUnit();
-                new MemberVisitor(compilationController, action).scan(unit, null);
+                new MemberVisitor(compilationController, action, doFullProcess).scan(unit, null);
         }
     }
 
@@ -239,78 +245,81 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
 
         private final CompilationInfo info;
         private final AbstractAction action;
+        private final boolean doFullProcess;
 
-        public MemberVisitor(CompilationInfo info, AbstractAction action) {
+        public MemberVisitor(CompilationInfo info, AbstractAction action, boolean doFullProcess) {
             this.info = info;
             this.action = action;
+            this.doFullProcess = doFullProcess;
         }
 
         @Override
         public Void visitClass(ClassTree t, Void v) {
             Element el = info.getTrees().getElement(getCurrentPath());
-            if (el != null) {
+            if (action.isEnabled() && el != null) {
                 TypeElement te = (TypeElement) el;
                 if (te.getKind() == ElementKind.CLASS && te.getModifiers().contains(Modifier.PUBLIC)) {
-                    action.setEnabled(true);
-                    int index = te.getQualifiedName().toString().lastIndexOf(".");
-                    args.put("package", te.getQualifiedName().toString().substring(0, index));
-                    args.put("object", te.getQualifiedName().toString().substring(index + 1));
-                    List<String> fields = new ArrayList<String>();
-                    List<Element> fieldElems = new ArrayList<Element>();
-                    for (Element e : te.getEnclosedElements()) {
-                        if (e.getKind() == ElementKind.FIELD
-                                && !e.getModifiers().contains(Modifier.STATIC)) {
-                            fields.add(e.getSimpleName().toString());
-                            fieldElems.add(e);
-                            List<? extends AnnotationMirror> annotationMirrors = e.getAnnotationMirrors();
-                            for (AnnotationMirror annotationMirror : annotationMirrors) {
-                                String str = annotationMirror.toString();
-                                if (str.equals("@javax.persistence.Id")) {
-                                    // In case its a JPA id field, special arg for that
-                                    args.put("idfield", e);
+                    if (doFullProcess) {
+                        int index = te.getQualifiedName().toString().lastIndexOf(".");
+                        args.put("package", te.getQualifiedName().toString().substring(0, index));
+                        args.put("object", te.getQualifiedName().toString().substring(index + 1));
+                        List<String> fields = new ArrayList<String>();
+                        List<Element> fieldElems = new ArrayList<Element>();
+                        for (Element e : te.getEnclosedElements()) {
+                            if (e.getKind() == ElementKind.FIELD
+                                    && !e.getModifiers().contains(Modifier.STATIC)) {
+                                fields.add(e.getSimpleName().toString());
+                                fieldElems.add(e);
+                                List<? extends AnnotationMirror> annotationMirrors = e.getAnnotationMirrors();
+                                for (AnnotationMirror annotationMirror : annotationMirrors) {
+                                    String str = annotationMirror.toString();
+                                    if (str.equals("@javax.persistence.Id")) {
+                                        // In case its a JPA id field, special arg for that
+                                        args.put("idfield", e);
+                                    }
                                 }
                             }
                         }
-                    }
-                    args.put("fields", fields);
-                    args.put("fieldElems", fieldElems);
-                    List<String> fieldsAndModifiers = new ArrayList<String>();
-                    List<String> fieldsAndSimpleModifiers = new ArrayList<String>();
-                    for (Element e : te.getEnclosedElements()) {
-                        if (e.getKind() == ElementKind.FIELD) {
-                            Modifier next;
-                            if (e.getModifiers().iterator().hasNext()) {
-                                next = e.getModifiers().iterator().next();
-                            } else {
-                                next = Modifier.PRIVATE;
+                        args.put("fields", fields);
+                        args.put("fieldElems", fieldElems);
+                        List<String> fieldsAndModifiers = new ArrayList<String>();
+                        List<String> fieldsAndSimpleModifiers = new ArrayList<String>();
+                        for (Element e : te.getEnclosedElements()) {
+                            if (e.getKind() == ElementKind.FIELD) {
+                                Modifier next;
+                                if (e.getModifiers().iterator().hasNext()) {
+                                    next = e.getModifiers().iterator().next();
+                                } else {
+                                    next = Modifier.PRIVATE;
+                                }
+                                fieldsAndModifiers.add(
+                                        next
+                                        + " "
+                                        + e.asType().toString()
+                                        + " "
+                                        + e.getSimpleName().toString()
+                                );
+                                String[] tokens = e.asType().toString().split("\\.(?=[^\\.]+$)");
+                                fieldsAndSimpleModifiers.add(
+                                        next
+                                        + " "
+                                        + tokens[tokens.length-1]
+                                        + " "
+                                        + e.getSimpleName().toString()
+                                );
                             }
-                            fieldsAndModifiers.add(
-                                    next
-                                    + " "
-                                    + e.asType().toString()
-                                    + " "
-                                    + e.getSimpleName().toString()
-                            );
-                            String[] tokens = e.asType().toString().split("\\.(?=[^\\.]+$)");
-                            fieldsAndSimpleModifiers.add(
-                                    next
-                                    + " "
-                                    + tokens[tokens.length-1]
-                                    + " "
-                                    + e.getSimpleName().toString()
-                            );
                         }
+                        args.put("fieldsAndModifiers", fieldsAndModifiers);
+                        args.put("fieldsAndSimpleModifiers", fieldsAndSimpleModifiers);
+    //                    List<String> methods = new ArrayList<String>();
+    //                    for (Element e : te.getEnclosedElements()) {
+    //                        if (e.getKind() == ElementKind.METHOD) {
+    //                            methods.add(e.getModifiers().iterator().next().toString() + " " + e.asType().toString() + " " + e.getSimpleName().toString() + "() {\n"
+    //                                    + "    }");
+    //                        }
+    //                    }
+    //                    args.put("methods", methods);
                     }
-                    args.put("fieldsAndModifiers", fieldsAndModifiers);
-                    args.put("fieldsAndSimpleModifiers", fieldsAndSimpleModifiers);
-//                    List<String> methods = new ArrayList<String>();
-//                    for (Element e : te.getEnclosedElements()) {
-//                        if (e.getKind() == ElementKind.METHOD) {
-//                            methods.add(e.getModifiers().iterator().next().toString() + " " + e.asType().toString() + " " + e.getSimpleName().toString() + "() {\n"
-//                                    + "    }");
-//                        }
-//                    }
-//                    args.put("methods", methods);
                 } else {
                     action.setEnabled(false);
                 }
