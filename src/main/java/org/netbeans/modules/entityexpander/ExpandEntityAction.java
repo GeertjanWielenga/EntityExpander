@@ -11,6 +11,7 @@ import java.io.OutputStreamWriter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import javax.lang.model.element.AnnotationMirror;
@@ -299,11 +300,22 @@ public final class ExpandEntityAction extends AbstractAction implements ContextA
                                         + " "
                                         + e.getSimpleName().toString()
                                 );
-                                String[] tokens = e.asType().toString().split("\\.(?=[^\\.]+$)");
+                                String[] parts = e.asType().toString().split("[<>]");
+                                String[] tokens;                                
+                                String fieldType;
+                                if (parts.length > 1) {
+                                    String[] types = parts[0].split("\\.(?=[^\\.]+$)");
+                                    tokens = parts[1].split("\\.(?=[^\\.]+$)");
+                                    fieldType = types[types.length-1]+"<"+tokens[tokens.length-1]+">";
+                                } else {
+                                    tokens = parts[0].split("\\.(?=[^\\.]+$)");
+                                    fieldType = tokens[tokens.length-1];
+                                }
+                                
                                 fieldsAndSimpleModifiers.add(
                                         next
                                         + " "
-                                        + tokens[tokens.length-1]
+                                        + fieldType
                                         + " "
                                         + e.getSimpleName().toString()
                                 );
